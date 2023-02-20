@@ -195,6 +195,9 @@ class Clip(nn.Module):
         self.backbone = clip.load("ViT-B/32", device=device)[0]
     def forward(self, x, mixup = None, lbda = None, perm = None):
         return self.backbone.encode_image(x)
+from squeeznet import SqueezeNet
+
+
 def prepareBackbone():
     large = False
     patch_size = 0
@@ -213,6 +216,8 @@ def prepareBackbone():
         backbone = '_'.join(backbone.split('_')[:-1])
 
     return {
+        "squeeznet_1_0": lambda : (SqueezeNet(version="1_0",use_leaky_relu=args.leaky)),
+        "squeeznet_1_1": lambda : (SqueezeNet(version="1_1",use_leaky_relu=args.leaky)),
         "resnet18": lambda: (ResNet(BasicBlock, [(2, 1, 1), (2, 2, 2), (2, 2, 4), (2, 2, 8)], args.feature_maps, large = large), 8 * args.feature_maps),
         "resnet20": lambda: (ResNet(BasicBlock, [(3, 1, 1), (3, 2, 2), (3, 2, 4)], args.feature_maps, large = large), 4 * args.feature_maps),
         "resnet56": lambda: (ResNet(BasicBlock, [(9, 1, 1), (9, 2, 2), (9, 2, 4)], args.feature_maps, large = large), 4 * args.feature_maps),

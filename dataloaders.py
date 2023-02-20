@@ -145,7 +145,7 @@ def miniimagenet(datasetName):
     if args.sample_aug == 1:
         default_test_transforms = ['resize_92/84', 'centercrop', 'totensor', 'miniimagenetnorm']
     else:
-        default_test_transforms = ['randomresizecrop', 'totensor', 'miniimagenetnorm']
+        default_test_transforms = ['randomresizedcrop', 'totensor', 'miniimagenetnorm']
     trans = get_transforms(image_size, datasetName, default_train_transforms, default_test_transforms)
 
     return {"dataloader": dataLoader(DataHolder(dataset["data"], dataset["targets"], trans), shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName="miniimagenet_"+datasetName), "name":dataset["name"], "num_classes":dataset["num_classes"], "name_classes": dataset["name_classes"]}
