@@ -125,8 +125,8 @@ class ResNet(nn.Module):
 class BasicBlockRN12(nn.Module):
     def __init__(self, in_f, out_f):
         super(BasicBlockRN12, self).__init__()
-        self.conv1 = ConvBN2d(in_f, out_f, outRelu = True, leaky = True)
-        self.conv2 = ConvBN2d(out_f, out_f, outRelu = True, leaky = True)
+        self.conv1 = ConvBN2d(in_f, out_f, outRelu = True)
+        self.conv2 = ConvBN2d(out_f, out_f, outRelu = True)
         self.conv3 = ConvBN2d(out_f, out_f)
         self.sc = ConvBN2d(in_f, out_f, kernel_size = 1, padding = 0)
 
@@ -195,6 +195,7 @@ class Clip(nn.Module):
         self.backbone = clip.load("ViT-B/32", device=device)[0]
     def forward(self, x, mixup = None, lbda = None, perm = None):
         return self.backbone.encode_image(x)
+
 def prepareBackbone():
     large = False
     patch_size = 0
