@@ -127,10 +127,12 @@ class BasicBlockRN12(nn.Module):
         super(BasicBlockRN12, self).__init__()
         self.conv1 = ConvBN2d(in_f, out_f, outRelu = True)
         self.conv2 = ConvBN2d(out_f, out_f, outRelu = True)
-        self.conv3 = ConvBN2d(out_f, out_f)
+        
         if args.use_strides:
-            self.sc = ConvBN2d(in_f, out_f, kernel_size = 1, padding = 0,strides=(2, 2))
+            self.conv3 = ConvBN2d(out_f, out_f,stride=2)
+            self.sc = ConvBN2d(in_f, out_f, kernel_size = 1, padding = 0,stride=2)
         else:
+            self.conv3 = ConvBN2d(out_f, out_f)
             self.sc = ConvBN2d(in_f, out_f, kernel_size = 1, padding = 0)
 
 
@@ -148,7 +150,7 @@ class BasicBlockRN12(nn.Module):
 
 class ResNet9(nn.Module):
     def __init__(self, featureMaps):
-        super(ResNet12, self).__init__()
+        super(ResNet9, self).__init__()
         self.block1 = BasicBlockRN12(3, featureMaps)
         self.block2 = BasicBlockRN12(featureMaps, int(2.5 * featureMaps))
         self.block3 = BasicBlockRN12(int(2.5 * featureMaps), 5 * featureMaps)
