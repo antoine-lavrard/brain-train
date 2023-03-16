@@ -99,7 +99,7 @@ parser.add_argument("--few-shot-unbalanced-queries", action="store_true", help="
 parser.add_argument("--few-shot-classifier", type=str, default="ncm", help="classifier for few-shot runs, can be ncm or knn where k is an integer")
 parser.add_argument("--sample-aug", type=int, default=1, help="number of versions of support/query samples (using random crop) 1 means no augmentation")
 parser.add_argument("--test-features", type=str, default="", help="test few-shot runs on saved features")
-
+parser.add_argument("--use-strides",action="store_true",help="if speicified, use strides instead of maxpooloing")
 args = parser.parse_args()
 
 if args.dataset != "":
