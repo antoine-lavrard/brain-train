@@ -3,10 +3,9 @@ NAME_EXPERIMENT=miniimagenet_LEAKY_ME
 DATASET=miniimagenet
 PARENT_DIR=${DATASET}_LEAKY_ME
 
-# easy-smallmini1,45,pt1 easy-cifar1,64,pt1 easy-smallcifar1,45,pt1 easy-tinycifar1,32,pt1
-# miniimagenet_resnet12_trainsize32,32,pt easy-mini1,64,pt1
+# easy-smallmini1,45,pt1 easy-cifar1,64,pt1 easy-smallcifar1,45,pt1 easy-tinycifar1,32,pt1 miniimagenet_resnet12_trainsize32,32,pt easy-mini1,64,pt1
 mkdir -p $PARENT_DIR
-for i in easy-tinymini1,32,pt1 easy-smallmini1,45,pt1
+for i in easy-tinymini1,32,pt1 easy-smallmini1,45,pt1 miniimagenetbackbone30,64,pt miniimagenet_resnet12_trainsize32,32,pt
 do
     IFS=',' read WEIGHT_NAME FEATURE_MAP EXT <<< "${i}"
     echo "processing ${WEIGHT_NAME}.${EXT}";
