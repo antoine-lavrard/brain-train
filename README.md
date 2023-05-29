@@ -20,7 +20,7 @@ pip install -r requirements.txt
 ### Setup Datasets
 This step is designed to prepare the datasets for later use. In a first place, you must dowload them, and put them into a directory. Once this is done, by running the following command, some meta-data about the dataset (per example number of class, number of samples per class) will be added as a dataset.json in the same folder. 
 
-Main available datasets (make sure the name are corrects : ) (check the [script](create_dataset_file.py) for all available datasets)
+Main available datasets (make sure the name are corrects : ) (check the [script](create_dataset_files.py) for all available datasets)
 
 - miniimagenetimages
 - tieredimagenet
@@ -30,7 +30,7 @@ Main available datasets (make sure the name are corrects : ) (check the [script]
 linux :
 ```Bash
 
-python create_dataset_files.py --dataset-path /home/y17bendo/Documents/datasets/
+python create_dataset_files.py --dataset-path path/to/datasets/folder
 ```
 
 ## adapt the scripts :
