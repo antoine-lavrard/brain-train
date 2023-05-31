@@ -1,9 +1,8 @@
-from turtle import forward
-import torch 
+import torch
 import torch.nn as nn
 from einops import rearrange
 from einops.layers.torch import Rearrange
-import math 
+import math
 import warnings
 torch.autograd.set_detect_anomaly(True)
 def pair(t):
@@ -72,14 +71,14 @@ class DropPath(nn.Module):
 class Attention(nn.Module):
     def __init__(self, dim, heads, dim_head, attn_dropout, proj_dropout, qkv_bias=False) -> None:
         super(Attention, self).__init__()
-        inner_dim = dim_head *  heads   
+        inner_dim = dim_head *  heads
         self.heads = heads
         self.scale = dim_head ** -0.5 # 1/sqrt(dim_head)
         self.attn_dropout = nn.Dropout(attn_dropout)
         self.to_qkv = nn.Linear(dim, inner_dim*3, bias=qkv_bias) # One linear for all Q, K, V for all heads
         self.softmax = nn.Softmax(dim=-1) # Softmax over num_patches for each head separately
         self.to_out = nn.Sequential(nn.Linear(inner_dim, dim), nn.Dropout(proj_dropout))
-    
+
     def forward(self, x) -> torch.Tensor:
         qkv = self.to_qkv(x).chunk(3, dim=-1) # Split Q, K, V for all heads, (batch, num_patches, dim) -> 3x(batch, num_patches, dim_head*heads)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=self.heads), qkv) # Rearrange to (batch, heads, num_patches, dim_head)
@@ -104,7 +103,7 @@ class TransformerBlock(nn.Module):
         )
         self.norm2 = norm_layer(dim)
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-    
+
     def forward(self, x) -> torch.Tensor:
         x = self.norm1(x)
         x = x + self.drop_path(self.attention(x))
@@ -132,8 +131,8 @@ class ViT(nn.Module):
                 depth,
                 heads,
                 mlp_dim,
-                dim_head=64, 
-                pool=False, 
+                dim_head=64,
+                pool=False,
                 projection='linear', # if not linear use a convolution instead (in original paper they use linear)
                 drop_rate=0.,
                 attn_drop_rate = 0.,
@@ -153,11 +152,11 @@ class ViT(nn.Module):
             # Rearrange from (batch, channels, H, W) to (batch, num_patches, patch_dim) num_patches = channels * (H//patch_height) * (W//patch_width)
             Rearrange('b c (h ph) (w pw) -> b (h w) (ph pw c)', ph=patch_height, pw=patch_width), # Let Rearrange figure out h and w which is num_patches
             nn.Linear(patch_dim, dim)) if projection=='linear' else ConvProjection(channels, dim, patch_size)
-            
+
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim)) # Trainable parameter Add 1 for cls token
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim)) # Trainable parameter for the class token, refers to the task at hand used for training the transformer.
         self.dropout = nn.Dropout(p=drop_rate)
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule, from dino 
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule, from dino
         self.layers = nn.ModuleList([TransformerBlock(dim, heads, dim_head, mlp_dim, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], qkv_bias=qkv_bias, norm_layer=norm_layer) for i in range(depth)])
         self.pool = pool
         self.norm = norm_layer(dim)
@@ -183,7 +182,7 @@ class ViT(nn.Module):
         dim = x.shape[-1]
         h0 = h // self.patch_height
         w0 = w // self.patch_width
-        
+
         h0, w0 = h0 + 0.1, w0 + 0.1
         patch_pos_embed = nn.functional.interpolate(
             patch_pos_embed.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)), dim).permute(0, 3, 1, 2),
