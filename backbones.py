@@ -99,7 +99,7 @@ class ResNet(nn.Module):
             mixup_layer = 0
         elif mixup == "manifold mixup":
             mixup_layer = random.randint(0, len(self.blocks) + 1)
-        
+
         if mixup_layer == 0:
             x = lbda * x + (1 - lbda) * x[perm]
         if x.shape[1] == 1:
@@ -127,7 +127,7 @@ class BasicBlockRN12(nn.Module):
         super(BasicBlockRN12, self).__init__()
         self.conv1 = ConvBN2d(in_f, out_f, outRelu = True)
         self.conv2 = ConvBN2d(out_f, out_f, outRelu = True)
-        
+
         if args.use_strides:
             self.conv3 = ConvBN2d(out_f, out_f,stride=2)
             self.sc = ConvBN2d(in_f, out_f, kernel_size = 1, padding = 0,stride=2)
@@ -154,7 +154,7 @@ class ResNet9(nn.Module):
         self.block1 = BasicBlockRN12(3, featureMaps)
         self.block2 = BasicBlockRN12(featureMaps, int(2.5 * featureMaps))
         self.block3 = BasicBlockRN12(int(2.5 * featureMaps), 5 * featureMaps)
-        self.mp =nn.Identity() if args.use_strides else nn.MaxPool2d(2) 
+        self.mp =nn.Identity() if args.use_strides else nn.MaxPool2d(2)
 
     def forward(self, x, mixup = None, lbda = None, perm = None):
         mixup_layer = -1
@@ -162,7 +162,7 @@ class ResNet9(nn.Module):
             mixup_layer = 0
         elif mixup == "manifold mixup":
             mixup_layer = random.randint(0, 4)
-        
+
         if mixup_layer == 0:
             x = lbda * x + (1 - lbda) * x[perm]
         if x.shape[1] == 1:
@@ -196,7 +196,7 @@ class ResNet12(nn.Module):
         self.block2 = BasicBlockRN12(featureMaps, int(2.5 * featureMaps))
         self.block3 = BasicBlockRN12(int(2.5 * featureMaps), 5 * featureMaps)
         self.block4 = BasicBlockRN12(5 * featureMaps, 10 * featureMaps)
-        self.mp =nn.Identity() if args.use_strides else nn.MaxPool2d(2) 
+        self.mp =nn.Identity() if args.use_strides else nn.MaxPool2d(2)
 
     def forward(self, x, mixup = None, lbda = None, perm = None):
         mixup_layer = -1
@@ -204,7 +204,7 @@ class ResNet12(nn.Module):
             mixup_layer = 0
         elif mixup == "manifold mixup":
             mixup_layer = random.randint(0, 4)
-        
+
         if mixup_layer == 0:
             x = lbda * x + (1 - lbda) * x[perm]
         if x.shape[1] == 1:
@@ -229,7 +229,7 @@ class ResNet12(nn.Module):
             y = self.mp(self.block4(y, lbda, perm))
         else:
             y = self.mp(self.block4(y))
-        
+
         y = y.mean(dim = list(range(2, len(y.shape))))
         return y
 
@@ -247,6 +247,9 @@ class Clip(nn.Module):
         self.backbone = clip.load("ViT-B/32", device=device)[0]
     def forward(self, x, mixup = None, lbda = None, perm = None):
         return self.backbone.encode_image(x)
+
+from squeeznet import SqueezeNet
+
 
 def prepareBackbone():
     large = False
@@ -267,6 +270,8 @@ def prepareBackbone():
 
     return {
         "resnet9" : lambda : (ResNet9(args.feature_maps), 5 * args.feature_maps),
+        "squeeznet_1_0": lambda : (SqueezeNet(version="1_0",use_leaky_relu=args.leaky)),
+        "squeeznet_1_1": lambda : (SqueezeNet(version="1_1",use_leaky_relu=args.leaky)),
         "resnet18": lambda: (ResNet(BasicBlock, [(2, 1, 1), (2, 2, 2), (2, 2, 4), (2, 2, 8)], args.feature_maps, large = large), 8 * args.feature_maps),
         "resnet20": lambda: (ResNet(BasicBlock, [(3, 1, 1), (3, 2, 2), (3, 2, 4)], args.feature_maps, large = large), 4 * args.feature_maps),
         "resnet56": lambda: (ResNet(BasicBlock, [(9, 1, 1), (9, 2, 2), (9, 2, 4)], args.feature_maps, large = large), 4 * args.feature_maps),
