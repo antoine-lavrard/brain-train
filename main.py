@@ -1,9 +1,10 @@
 # Loading main libraries
 import torch
-import torch.nn as nn 
+import torch.nn as nn
 import random # for mixup
 import numpy as np # for manifold mixup
 import math
+import os
 from colorama import Fore, Back, Style
 # Loading other files
 from args import args
@@ -19,7 +20,7 @@ if args.wandb!='':
 
 if not args.silent:
     print(" done.")
-    
+
     print()
 
 print(args)
@@ -72,7 +73,7 @@ def train(epoch, backbone, teacher, criterion, optimizer, scheduler):
                         loss_proto, score_proto = criterion['prototypical'][trainingSetIdx](backbone, dataStep)
                         loss += args.step_coefficient[step_idx] * loss_proto
                         score += args.step_coefficient[step_idx] * score_proto
-                        
+
                     if 'lr' in step or 'mixup' in step or 'manifold mixup' in step or 'rotations' in step:
                         dataStep = data['supervised'].clone()
                         loss_lr, score = criterion['supervised'][trainingSetIdx](backbone, dataStep, target, lr="lr" in step, rotation="rotations" in step, mixup="mixup" in step, manifold_mixup="manifold mixup" in step)
@@ -102,7 +103,7 @@ def train(epoch, backbone, teacher, criterion, optimizer, scheduler):
                         dataStep = data['barlowtwins']
                         loss_barlowtwins = criterion['barlowtwins'][trainingSetIdx](backbone, dataStep)
                         loss += args.step_coefficient[step_idx]*loss_barlowtwins
-               
+
                     loss.backward()
 
                 losses[trainingSetIdx] += args.batch_size * loss.item()
@@ -123,7 +124,7 @@ def train(epoch, backbone, teacher, criterion, optimizer, scheduler):
                     for step in eval(args.steps):
                         if 'dino' in step:
                             criterion['dino'][trainingSetIdx].update_teacher(backbone, teacher['dino'], epoch-1, batch_idx_list[trainingSetIdx])
-                
+
         except StopIteration:
             return torch.stack([losses / total_elt, 100 * accuracies / total_elt]).transpose(0,1)
 
@@ -241,11 +242,15 @@ createCSV(trainSet, validationSet, testSet)
 for nRun in range(args.runs):
     if args.wandb!='':
         tag = (args.dataset != '')*[args.dataset] + (args.dataset == '')*['cross-domain'] + ['run_'+str(nRun)] * (args.runs != 1)
-        run_wandb = wandb.init(reinit = True, project=args.wandbProjectName, 
-            entity=args.wandb, 
-            tags=tag, 
+        run_wandb = wandb.init(reinit = True, project=args.wandbProjectName,
+            entity=args.wandb,
+            tags=tag,
             config=vars(args),
             dir=args.wandb_dir)
+        if args.save_backbone != "":
+            args.save_backbone = args.save_backbone + run_wandb.id
+        if args.save_features_prefix != "":
+            args.save_features_prefix = args.save_features_prefix + run_wandb.id
     if not args.silent:
         print("Preparing backbone... ", end='')
     if args.audio:
@@ -262,14 +267,14 @@ for nRun in range(args.runs):
         print(" containing {:,} parameters and feature space of dim {:d}.".format(numParamsBackbone, outputDim))
 
         print("Preparing criterion(s) and classifier(s)... ", end='')
-    
+
     try:
         nSteps = torch.min(torch.tensor([len(dataset["dataloader"]) for dataset in trainSet])).item()
         if args.dataset_size > 0 and math.ceil(args.dataset_size / args.batch_size) < nSteps:
             nSteps = math.ceil(args.dataset_size / args.batch_size)
     except:
         nSteps = 0
-    
+
     criterion = {}
     teacher = {}
     all_steps = [item for sublist in eval(args.steps) for item in sublist]
@@ -281,14 +286,14 @@ for nRun in range(args.runs):
         from selfsupervised.dino import DINO
         criterion['dino'] = [DINO(in_dim=outputDim, epochs=args.epochs, nSteps=nSteps) for _ in trainSet]
         teacher['dino'] = backbones.prepareBackbone()[0].to(args.device) # Same backbone but with a different init
-         
+
         for p in teacher['dino'].parameters(): # Freeze teacher + teacher head
             p.requires_grad = False
-         
+
         for crit in criterion['dino']:
             for p in crit.teacher_head.parameters():
                 p.requires_grad = False
-  
+
     if 'simclr' in all_steps:
         from selfsupervised.simclr import SIMCLR
         criterion['simclr'] = [SIMCLR(in_dim=outputDim, supervised=False) for _ in trainSet]
@@ -301,7 +306,7 @@ for nRun in range(args.runs):
     if 'barlowtwins' in all_steps:
         from selfsupervised.barlowtwins import BARLOWTWINS
         criterion['barlowtwins'] = [BARLOWTWINS(in_dim=outputDim) for _ in trainSet]
-        
+
     numParamsCriterions = 0
     for c in [item for sublist in criterion.values() for item in sublist] :
         c.to(args.device)
@@ -336,7 +341,7 @@ for nRun in range(args.runs):
                 for dataset in testSet:
                     print(Back.RED + " {:>16s} ".format(dataset["name"]) + Style.RESET_ALL, end='')
             print()
-        
+
         if epoch == 0 and args.warmup_epochs>0:
             optimizer = get_optimizer(parameters, args.optimizer.lower(), lr=lr, weight_decay=args.wd)
             scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, start_factor=1/(args.warmup_epochs+1), end_factor=1, total_iters=args.warmup_epochs*nSteps, last_epoch=-1) # warmup scheduler (linear)
@@ -351,7 +356,7 @@ for nRun in range(args.runs):
                 else:
                     index = args.milestones.index(epoch)
                     interval = nSteps * (args.milestones[index + 1] - args.milestones[index]-1)
-                if args.scheduler == "cosine":                
+                if args.scheduler == "cosine":
                     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer = optimizer, T_max = interval, eta_min = lr * args.end_lr_factor)
                 elif args.scheduler == "linear":
                     scheduler = torch.optim.lr_scheduler.LinearLR(optimizer = optimizer, start_factor = 1, end_factor = args.end_lr_factor, total_iters = interval, last_epoch=-1)
