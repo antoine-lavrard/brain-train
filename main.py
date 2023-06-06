@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import random # for mixup
 import numpy as np # for manifold mixup
+import yaml
 import math
 import os
 from colorama import Fore, Back, Style
@@ -11,7 +12,7 @@ from args import args
 if not args.silent:
     print("Loading local files... ", end ='')
 from utils import *
-from dataloaders import trainSet, validationSet, testSet
+import dataloaders
 import classifiers
 from few_shot_evaluation import EpisodicGenerator, ImageNetGenerator, OmniglotGenerator
 
@@ -238,7 +239,6 @@ if args.test_features != "":
 allRunTrainStats = None
 allRunValidationStats = None
 allRunTestStats = None
-createCSV(trainSet, validationSet, testSet)
 for nRun in range(args.runs):
     if args.wandb!='':
         tag = (args.dataset != '')*[args.dataset] + (args.dataset == '')*['cross-domain'] + ['run_'+str(nRun)] * (args.runs != 1)
@@ -247,10 +247,22 @@ for nRun in range(args.runs):
             tags=tag,
             config=vars(args),
             dir=args.wandb_dir)
+        args.backbone = wandb.config.backbone
+        args.feature_maps = wandb.config.feature_maps
+        args.leaky = wandb.config.leaky
+        args.test_image_size = wandb.config.test_image_size
+        args.training_image_size = wandb.config.training_image_size
+        args.use_strides = wandb.config.use_strides
+
         if args.save_backbone != "":
             args.save_backbone = args.save_backbone + run_wandb.id
         if args.save_features_prefix != "":
             args.save_features_prefix = args.save_features_prefix + run_wandb.id
+
+    trainSet, validationSet, testSet = dataloaders.get_dataloaders()
+    if nRun == 0:
+        createCSV(trainSet, validationSet, testSet)
+
     if not args.silent:
         print("Preparing backbone... ", end='')
     if args.audio:

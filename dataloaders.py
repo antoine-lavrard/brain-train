@@ -51,7 +51,7 @@ class CategoriesSampler():
         self.episodic_iterations_per_epoch = args.episodic_iterations_per_epoch
     def __len__(self):
         return self.episodic_iterations_per_epoch
-    
+
     def __iter__(self):
         """
             Return indices used in one batch
@@ -67,7 +67,7 @@ class CategoriesSampler():
             yield batch
 
 def dataLoader(dataholder, shuffle, datasetName, episodic):
-    if episodic : 
+    if episodic :
         sampler = CategoriesSampler(datasetName=datasetName)
         return torch.utils.data.DataLoader(dataholder, num_workers = min(os.cpu_count(), 8), batch_sampler=sampler)
     return torch.utils.data.DataLoader(dataholder, batch_size = args.batch_size, shuffle = shuffle, num_workers = min(os.cpu_count(), 8))
@@ -87,7 +87,7 @@ class TransformWrapper(object):
 def get_transforms(image_size, datasetName, default_train_transforms, default_test_transforms):
     if datasetName == 'train':
         supervised_transform_str = args.training_transforms if len(args.training_transforms) > 0 else default_train_transforms
-        supervised_transform = parse_transforms(supervised_transform_str, image_size) 
+        supervised_transform = parse_transforms(supervised_transform_str, image_size)
         all_transforms = {}
         if supervised:
             all_transforms['supervised'] = transforms.Compose(supervised_transform)
@@ -111,7 +111,7 @@ def cifar10(datasetName):
     else:
         default_test_transforms = ['randomresizedcrop','cifar10norm']
     trans = get_transforms(image_size, datasetName, default_train_transforms, default_test_transforms)
-   
+
     return {"dataloader": dataLoader(DataHolder(data, targets, trans, opener=lambda x:x), shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName="cifar10_"+datasetName), "name":"cifar10_" + datasetName, "num_classes":10, "name_classes": pytorchDataset.classes}
 
 def cifar100(datasetName):
@@ -133,10 +133,11 @@ def cifar100(datasetName):
     return {"dataloader": dataLoader(DataHolder(data, targets, trans, opener=lambda x:x), shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName="cifar100_"+datasetName), "name":"cifar100_" + datasetName, "num_classes":100, "name_classes": pytorchDataset.classes}
 
 def miniimagenet(datasetName):
-    f = open(args.dataset_path + "datasets.json")    
+    f = open(args.dataset_path + "datasets.json")
     all_datasets = json.loads(f.read())
     f.close()
     dataset = all_datasets["miniimagenet_" + datasetName]
+
     if datasetName == "train":
         image_size = args.training_image_size if args.training_image_size>0 else 84
     else:
@@ -151,7 +152,7 @@ def miniimagenet(datasetName):
     return {"dataloader": dataLoader(DataHolder(dataset["data"], dataset["targets"], trans), shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName="miniimagenet_"+datasetName), "name":dataset["name"], "num_classes":dataset["num_classes"], "name_classes": dataset["name_classes"]}
 
 def tieredimagenet(datasetName):
-    f = open(args.dataset_path + "datasets.json")    
+    f = open(args.dataset_path + "datasets.json")
     all_datasets = json.loads(f.read())
     f.close()
     dataset = all_datasets["tieredimagenet_" + datasetName]
@@ -169,7 +170,7 @@ def tieredimagenet(datasetName):
     return {"dataloader": dataLoader(DataHolder(dataset["data"], dataset["targets"], trans), shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName="tieredimagenet_"+datasetName), "name":dataset["name"], "num_classes":dataset["num_classes"], "name_classes": dataset["name_classes"]}
 
 def cifarfs(datasetName):
-    f = open(args.dataset_path + "datasets.json")    
+    f = open(args.dataset_path + "datasets.json")
     all_datasets = json.loads(f.read())
     f.close()
     dataset = all_datasets["cifarfs_" + datasetName]
@@ -184,7 +185,7 @@ def cifarfs(datasetName):
     else:
         default_test_transforms = ['randomresizecrop', 'totensor', 'imagenetnorm']
     trans = get_transforms(image_size, datasetName, default_train_transforms, default_test_transforms)
-    
+
     return {"dataloader": dataLoader(DataHolder(dataset["data"], dataset["targets"], trans), shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName="cifarfs_"+datasetName), "name":dataset["name"], "num_classes":dataset["num_classes"], "name_classes": dataset["name_classes"]}
 
 def imagenet(datasetName):
@@ -196,17 +197,17 @@ def imagenet(datasetName):
     if args.sample_aug == 1:
         default_test_transforms = ['resize_256/224', 'centercrop', 'totensor', 'imagenetnorm']
     else:
-        default_test_transforms = ['randomresizedcrop', 'totensor', 'imagenetnorm'] 
+        default_test_transforms = ['randomresizedcrop', 'totensor', 'imagenetnorm']
     trans = get_transforms(image_size, datasetName, default_train_transforms, default_test_transforms)
     pytorchDataset = datasets.ImageNet(args.dataset_path + "/imagenet", split = "train" if datasetName != "test" else "val", transform = trans)
-        
+
     return {"dataloader": dataLoader(pytorchDataset, shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName="imagenet_"+datasetName), "name":"imagenet_" + datasetName, "num_classes":1000, "name_classes": pytorchDataset.classes}
 
 def metadataset(datasetName, name):
     """
     Generic function to load a dataset from the Meta-Dataset v1.0
     """
-    f = open(args.dataset_path + "datasets.json")    
+    f = open(args.dataset_path + "datasets.json")
     all_datasets = json.loads(f.read())
     f.close()
     dataset = all_datasets[name+"_" + datasetName]
@@ -223,7 +224,7 @@ def metadataset(datasetName, name):
     return {"dataloader": dataLoader(DataHolder(dataset["data"], dataset["targets"], trans), shuffle = datasetName == "train", episodic=args.episodic and datasetName == "train", datasetName=name+"_"+datasetName), "name":dataset["name"], "num_classes":dataset["num_classes"], "name_classes": dataset["name_classes"]}
 
 def metadataset_imagenet_v2():
-    f = open(args.dataset_path + "datasets.json")    
+    f = open(args.dataset_path + "datasets.json")
     all_datasets = json.loads(f.read())
     f.close()
     dataset_train = all_datasets["metadataset_imagenet_train"]
@@ -275,20 +276,20 @@ def audioset(datasetName):
             new_tensor = torch.zeros(freq)
             new_tensor[:N] = tensor
             return new_tensor
-        
+
         if N > freq:
             i = random.randint(0,N - freq - 1)
         else:
             i = 0
         return tensor[i:i+freq]
 
-    f = open(args.dataset_path + "datasets.json")    
+    f = open(args.dataset_path + "datasets.json")
     all_datasets = json.loads(f.read())
     f.close()
     dataset = all_datasets["audioset_" + datasetName]
     data = dataset["data"]
     targets = dataset["targets"]
-    
+
     trans = transforms.Compose([lambda x : randcrop(x.mean(dim=0), duration = 1).unsqueeze(0).to(dtype=torch.float), lambda x: x + 0.1 * torch.randn_like(x), lambda x: -1 * x if random.random() < 0.5 else x])
     test_trans = lambda x : randcrop(x.mean(dim=0), duration = 1).unsqueeze(0).to(dtype=torch.float)
     target_trans = lambda x: torch.zeros(dataset['num_classes']).scatter_(0,torch.Tensor(x).long(), 1.)
@@ -303,18 +304,18 @@ def esc50(datasetName):
     dataset = all_datasets["esc50fs_" + datasetName]
     data = dataset["data"]
     targets = dataset["targets"]
-    
+
     trans = lambda x : x.unsqueeze(0)
     test_trans = lambda x : x.unsqueeze(0)
     opener = lambda x: torch.load(x, map_location='cpu')
 
-    return {"dataloader": dataLoader(DataHolder(data, targets, trans if datasetName == "train" else test_trans, opener=opener), shuffle = datasetName == "train"), 
-    "name":dataset['name'], 
-    "num_classes":dataset["num_classes"], 
+    return {"dataloader": dataLoader(DataHolder(data, targets, trans if datasetName == "train" else test_trans, opener=opener), shuffle = datasetName == "train"),
+    "name":dataset['name'],
+    "num_classes":dataset["num_classes"],
     "name_classes": dataset["name_classes"]}
 
 def metaalbum(source, is_train=False):
-    f = open(args.dataset_path + "datasets.json")    
+    f = open(args.dataset_path + "datasets.json")
     all_datasets = json.loads(f.read())
     f.close()
     dataset = all_datasets["metaalbum_"+source]
@@ -324,7 +325,7 @@ def metaalbum(source, is_train=False):
     image_size = 224 if args.backbone == "resnet50" else 126
     if is_train:
         supervised_transform = transforms.Compose([
-            transforms.RandomResizedCrop(image_size), transforms.ToTensor(), normalization, GaussianNoise(0.1533), transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4), transforms.RandomHorizontalFlip()]) 
+            transforms.RandomResizedCrop(image_size), transforms.ToTensor(), normalization, GaussianNoise(0.1533), transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4), transforms.RandomHorizontalFlip()])
         all_transforms = {}
         if 'lr' in all_steps or 'rotations' in all_steps or 'mixup' in all_steps or 'manifold mixup' in all_steps or (args.few_shot and "M" in args.feature_processing) or args.save_features_prefix != "":
             all_transforms['supervised'] = supervised_transform
@@ -402,7 +403,7 @@ def prepareDataLoader(name, is_train=False):
             "metadataset_traffic_signs_test": lambda: metadataset("test", "metadataset_traffic_signs"),
             "metadataset_imagenet_v2_train": lambda: metadataset_imagenet_v2(),
             "audioset_train":lambda: audioset("train"),
-            "audioset_test":lambda: audioset("test"), 
+            "audioset_test":lambda: audioset("test"),
             "esc50fs_train":lambda: esc50("train"),
             "esc50fs_val":lambda: esc50("validation"),
             "esc50fs_test":lambda: esc50("test"),
@@ -413,8 +414,8 @@ def prepareDataLoader(name, is_train=False):
     # Adding Meta albums
     for setting in ['Micro', 'Macro', 'Extended']:
         for album in ['BCT', 'BRD', 'CRS', 'FLW', 'MD_MIX', 'PLK', 'PLT_VIL', 'RESISC', 'SPT', 'TEX']:
-            dataset_options[f'metaalbum_{album.lower()}_{setting.lower()}'] = lambda: metaalbum(f'{album}_{setting}', is_train=is_train)    
-                 
+            dataset_options[f'metaalbum_{album.lower()}_{setting.lower()}'] = lambda: metaalbum(f'{album}_{setting}', is_train=is_train)
+
     for elt in name:
         assert elt.lower() in dataset_options.keys(), f'The chosen dataset "{elt}" is not existing, please provide a valid option: \n {list(dataset_options.keys())}'
         result.append(dataset_options[elt.lower()]())
@@ -426,48 +427,48 @@ def checkSize(dataset):
             image_size = 28
         elif 'imagenet' in dataset and 'metadataset' not in dataset and 'miniimagenet' not in dataset:
             image_size = 224
-        elif 'metadataset' in dataset: 
+        elif 'metadataset' in dataset:
             image_size = 126
         elif 'miniimagenet' in dataset or 'tieredimagenet' in dataset or 'cub' in dataset:
             image_size = 84
         return image_size
+def get_dataloaders():
+    if args.training_dataset != "":
+        try:
+            eval(args.training_dataset)
+            trainSet = prepareDataLoader(eval(args.training_dataset), is_train=True)
+            if args.training_image_size == -1:
+                args.training_image_size = checkSize(eval(args.training_dataset)[0])
+        except NameError:
+            trainSet = prepareDataLoader(args.training_dataset, is_train=True)
+            if args.training_image_size == -1:
+                args.training_image_size = checkSize(args.training_dataset)
+    else:
+        trainSet = []
+    if args.validation_dataset != "":
+        try:
+            eval(args.validation_dataset)
+            validationSet = prepareDataLoader(eval(args.validation_dataset), is_train=False)
+            if args.test_image_size == -1:
+                args.test_image_size = checkSize(eval(args.validation_dataset)[0])
+        except NameError:
+            validationSet = prepareDataLoader(args.validation_dataset, is_train=False)
+            if args.test_image_size == -1:
+                args.test_image_size = checkSize(args.validation_dataset)
+    else:
+        validationSet = []
 
-if args.training_dataset != "":
-    try:
-        eval(args.training_dataset)
-        trainSet = prepareDataLoader(eval(args.training_dataset), is_train=True)
-        if args.training_image_size == -1:
-            args.training_image_size = checkSize(eval(args.training_dataset)[0])
-    except NameError:
-        trainSet = prepareDataLoader(args.training_dataset, is_train=True)
-        if args.training_image_size == -1:
-            args.training_image_size = checkSize(args.training_dataset)
-else:
-    trainSet = []
-if args.validation_dataset != "":
-    try:
-        eval(args.validation_dataset)
-        validationSet = prepareDataLoader(eval(args.validation_dataset), is_train=False)
-        if args.test_image_size == -1:
-            args.test_image_size = checkSize(eval(args.validation_dataset)[0])
-    except NameError:
-        validationSet = prepareDataLoader(args.validation_dataset, is_train=False)
-        if args.test_image_size == -1:
-            args.test_image_size = checkSize(args.validation_dataset)
-else:
-    validationSet = []
+    if args.test_dataset != "":
+        try:
+            eval(args.test_dataset)
+            testSet = prepareDataLoader(eval(args.test_dataset), is_train=False)
+            if args.test_image_size == -1:
+                args.test_image_size = checkSize(eval(args.test_dataset)[0])
+        except NameError:
+            testSet = prepareDataLoader(args.test_dataset, is_train=False)
+            if args.test_image_size == -1:
+                args.test_image_size = checkSize(args.test_dataset)
+    else:
+        testSet = []
 
-if args.test_dataset != "":
-    try:
-        eval(args.test_dataset)
-        testSet = prepareDataLoader(eval(args.test_dataset), is_train=False)
-        if args.test_image_size == -1:
-            args.test_image_size = checkSize(eval(args.test_dataset)[0])
-    except NameError:
-        testSet = prepareDataLoader(args.test_dataset, is_train=False)
-        if args.test_image_size == -1:
-            args.test_image_size = checkSize(args.test_dataset)
-else:
-    testSet = []
-
-print(" dataloaders,", end='')
+    return trainSet, validationSet, testSet
