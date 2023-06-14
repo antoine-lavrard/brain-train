@@ -1,13 +1,13 @@
 #!/bin/bash
 
 DATASET_NAME=miniimagenet
-TEST_RESOLUTION=84
+TEST_RESOLUTION=32
 DEVICE=cuda:0 # the
 CKPT_PATH=~/Projects/brain-train-pefsl-checkpoints/
 BACKBONE_NAME=resnet9
-RESOLUTION=84
-USE_STRIDES=
-FMAPS=32
+RESOLUTION=32
+USE_STRIDES=--use-strides
+FMAPS=24
 
 python  main.py \
 --dataset ${DATASET_NAME} \
