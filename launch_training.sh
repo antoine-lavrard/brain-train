@@ -31,4 +31,4 @@ python  main.py \
 --leaky \
 --feature-maps ${FMAPS} \
 $STRIDES \
---wandb brain-imt --wandbProjectName PEFSL --wandb-dir ~/wandb
+# --wandb brain-imt --wandbProjectName PEFSL --wandb-dir ~/wandb
